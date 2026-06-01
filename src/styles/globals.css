@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind v4 design tokens (CSS-first config).
+ * Tokens declared in @theme are emitted as :root custom properties AND
+ * generate utilities (bg-petroleum, text-deep-navy, rounded-card, shadow-card, font-sans).
+ */
+@theme {
+  --color-petroleum: #004254;
+  --color-deep-navy: #002532;
+  --color-warm-gray: #aaaa9f;
+  --color-dark-gray: #646459;
+
+  --color-success: #44b757;
+  --color-accent-purple: #8661f5;
+  --color-accent-orange: #e56813;
+
+  --color-bg: #e3e2da;
+  --color-surface: #ffffff;
+  --color-border: #bcbbb5;
+
+  --font-sans: var(--font-inter), "Segoe UI", "Roboto", "Helvetica Neue",
+    system-ui, sans-serif;
+
+  --radius-card: 12px;
+
+  --shadow-card: 0 1px 4px 0 rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 4px 16px 0 rgba(0, 36, 50, 0.12);
+}
+
+/* Semantic aliases consumed via var() in components */
+:root {
+  --color-text: #002532;
+  --color-text-soft: #646459;
+  --color-text-invert: #ffffff;
+
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-toast: 800;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-warm-gray);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-petroleum);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

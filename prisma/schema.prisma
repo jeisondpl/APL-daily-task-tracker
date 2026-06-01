@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Rol {
+  id       Int       @id @default(autoincrement())
+  nombre   String    @unique @db.VarChar(50)
+  usuarios Usuario[]
+
+  @@map("roles")
+}
+
+model Usuario {
+  id           Int      @id @default(autoincrement())
+  nombre       String   @db.VarChar(200)
+  email        String   @unique @db.VarChar(200)
+  passwordHash String   @map("password_hash")
+  activo       Boolean  @default(true)
+  rolId        Int      @map("rol_id")
+  rol          Rol      @relation(fields: [rolId], references: [id])
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  listasTareas ListaTarea[]
+  tareas       Tarea[]
+
+  @@map("usuarios")
+}
+
+model ListaTarea {
+  id           Int      @id @default(autoincrement())
+  nombre       String   @db.VarChar(200)
+  descripcion  String?  @db.Text
+  colorDefault String   @default("#10B981") @map("color_default") @db.VarChar(20)
+  ownerId      Int      @map("owner_id")
+  owner        Usuario  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now()) @map("fecha_creacion")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tareas Tarea[]
+
+  @@index([ownerId])
+  @@map("listas_tareas")
+}
+
+model Tarea {
+  id      Int        @id @default(autoincrement())
+  listaId Int        @map("lista_id")
+  lista   ListaTarea @relation(fields: [listaId], references: [id], onDelete: Cascade)
+  ownerId Int        @map("owner_id")
+  owner   Usuario    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  fecha       DateTime @db.Date
+  nombre      String   @db.VarChar(300)
+  descripcion String?  @db.Text
+  horaInicio  String   @map("hora_inicio") @db.VarChar(5)
+  horaFin     String   @map("hora_fin") @db.VarChar(5)
+  color       String   @default("#10B981") @db.VarChar(20)
+  completada  Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([listaId])
+  @@index([ownerId, fecha])
+  @@map("tareas")
+}
