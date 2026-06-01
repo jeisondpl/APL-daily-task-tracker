@@ -53,6 +53,7 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
         backdropFilter: "blur(2px)",
         WebkitBackdropFilter: "blur(2px)",
         zIndex: "var(--z-modal-backdrop)" as string,
+        animation: "dtt-backdrop-in 160ms ease-out",
       }}
       // Close when clicking the backdrop directly (not the panel).
       onMouseDown={(e) => {
@@ -72,6 +73,7 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
           // Suppress default outline from tabIndex — only show on keyboard nav.
           "outline-none focus:outline-none"
         )}
+        style={{ animation: "dtt-modal-in 200ms cubic-bezier(0.16, 1, 0.3, 1)" }}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}

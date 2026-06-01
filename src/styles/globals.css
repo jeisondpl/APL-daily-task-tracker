@@ -82,6 +82,43 @@ body {
   border-radius: 4px;
 }
 
+/* Clickable task name in the timeline */
+.dtt-tarea-name {
+  border-radius: 4px;
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+.dtt-tarea-name:hover {
+  color: var(--color-petroleum) !important;
+  text-decoration: underline;
+}
+.dtt-tarea-name:focus-visible {
+  outline: 2px solid var(--color-petroleum);
+  outline-offset: 2px;
+}
+
+/* Modal entrance animations (auto-disabled under prefers-reduced-motion below) */
+@keyframes dtt-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dtt-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

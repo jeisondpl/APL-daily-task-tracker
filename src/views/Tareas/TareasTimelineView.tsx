@@ -26,9 +26,10 @@ function slotInRange(slot: string, hIni: string, hFin: string): boolean {
 
 interface Props {
   tareas: ITarea[];
+  onSelectTarea?: (tarea: ITarea) => void;
 }
 
-export function TareasTimelineView({ tareas }: Props) {
+export function TareasTimelineView({ tareas, onSelectTarea }: Props) {
   return (
     <div
       style={{
@@ -135,10 +136,26 @@ export function TareasTimelineView({ tareas }: Props) {
                     border: "1px solid var(--color-border)",
                     color: "var(--color-text)",
                     fontWeight: 500,
-                    textDecoration: t.completada ? "line-through" : "none",
                   }}
                 >
-                  {t.nombre}
+                  <button
+                    type="button"
+                    onClick={() => onSelectTarea?.(t)}
+                    title="Editar tarea"
+                    className="dtt-tarea-name"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      font: "inherit",
+                      color: "var(--color-text)",
+                      textAlign: "left",
+                      textDecoration: t.completada ? "line-through" : "none",
+                    }}
+                  >
+                    {t.nombre}
+                  </button>
                   {t.listaNombre && (
                     <span
                       style={{
