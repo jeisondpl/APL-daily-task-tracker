@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "@/shared/components/ui/Modal";
 import { Input } from "@/shared/components/ui/Input";
 import { Select } from "@/shared/components/ui/Select";
+import { Textarea } from "@/shared/components/ui/Textarea";
 import { Button } from "@/shared/components/ui/Button";
 import type {
   ITarea,
@@ -26,8 +27,17 @@ function generateSlots(from: string, to: string, stepMin: number): string[] {
   return out;
 }
 
-const SLOTS_INICIO = generateSlots("08:00", "18:00", 30); // 08:00 … 17:30
-const SLOTS_FIN = generateSlots("08:30", "18:30", 30); // 08:30 … 18:00
+const SLOTS_INICIO = generateSlots("05:00", "23:00", 30); // 05:00 … 22:30
+const SLOTS_FIN = generateSlots("05:30", "23:30", 30); // 05:30 … 23:00
+
+// Add minutes to a "HH:MM" slot, clamped to the 23:00 end of day.
+function addMinutes(hhmm: string, mins: number): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const total = Math.min(h * 60 + m + mins, 23 * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(
+    total % 60,
+  ).padStart(2, "0")}`;
+}
 
 interface Props {
   tarea: ITarea | null;
@@ -48,9 +58,9 @@ export function EditarTareaModal({
 }: Props) {
   const [nombre, setNombre] = useState("");
   const [listaId, setListaId] = useState<number>(0);
-  const [horaInicio, setHoraInicio] = useState("08:00");
-  const [horaFin, setHoraFin] = useState("08:30");
-  const [color, setColor] = useState("#10B981");
+  const [horaInicio, setHoraInicio] = useState("05:00");
+  const [horaFin, setHoraFin] = useState("05:30");
+  const [descripcion, setDescripcion] = useState("");
   const [completada, setCompletada] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -62,7 +72,7 @@ export function EditarTareaModal({
     setListaId(tarea.listaId);
     setHoraInicio(tarea.horaInicio);
     setHoraFin(tarea.horaFin);
-    setColor(tarea.color ?? "#10B981");
+    setDescripcion(tarea.descripcion ?? "");
     setCompletada(tarea.completada);
     setError(null);
   }, [tarea]);
@@ -87,7 +97,7 @@ export function EditarTareaModal({
         listaId,
         horaInicio,
         horaFin,
-        color,
+        descripcion: descripcion.trim(),
         completada,
       });
       onClose();
@@ -111,6 +121,9 @@ export function EditarTareaModal({
       setSaving(false);
     }
   }
+
+  const listaColor =
+    listas.find((l) => l.id === listaId)?.colorDefault ?? "#8661F5";
 
   return (
     <Modal
@@ -149,6 +162,14 @@ export function EditarTareaModal({
           onChange={(e) => setNombre(e.target.value)}
         />
 
+        <Textarea
+          label="Descripción (opcional)"
+          value={descripcion}
+          onChange={(e) => setDescripcion(e.target.value)}
+          rows={3}
+          placeholder="Notas o detalles de la tarea…"
+        />
+
         <Select
           label="Lista"
           value={listaId}
@@ -160,14 +181,21 @@ export function EditarTareaModal({
           <Select
             label="Desde"
             value={horaInicio}
-            onChange={(e) => setHoraInicio(e.target.value)}
+            onChange={(e) => {
+              const desde = e.target.value;
+              setHoraInicio(desde);
+              setHoraFin(addMinutes(desde, 30));
+            }}
             options={SLOTS_INICIO.map((s) => ({ value: s, label: s }))}
           />
           <Select
             label="Hasta"
             value={horaFin}
             onChange={(e) => setHoraFin(e.target.value)}
-            options={SLOTS_FIN.map((s) => ({ value: s, label: s }))}
+            options={SLOTS_FIN.filter((s) => s > horaInicio).map((s) => ({
+              value: s,
+              label: s,
+            }))}
           />
         </div>
 
@@ -179,30 +207,26 @@ export function EditarTareaModal({
             flexWrap: "wrap",
           }}
         >
-          <label
+          <span
             style={{
               display: "flex",
               alignItems: "center",
               gap: "8px",
               fontSize: "0.875rem",
-              color: "var(--color-text)",
+              color: "var(--color-text-soft)",
             }}
           >
-            Color
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
+            <span
               style={{
-                width: "40px",
-                height: "28px",
+                width: "16px",
+                height: "16px",
+                borderRadius: "4px",
+                backgroundColor: listaColor,
                 border: "1px solid var(--color-border)",
-                borderRadius: "6px",
-                cursor: "pointer",
-                background: "none",
               }}
             />
-          </label>
+            Color de la lista
+          </span>
 
           <label
             style={{

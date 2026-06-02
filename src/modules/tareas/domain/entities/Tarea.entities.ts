@@ -22,6 +22,8 @@ export interface ICreateTareaDTO {
   horaFin: string;
   color?: string;
   descripcion?: string;
+  // Admin-only: assign the task to a collaborator.
+  ownerId?: number;
 }
 
 export type IUpdateTareaDTO = Partial<ICreateTareaDTO> & {
@@ -32,4 +34,6 @@ export interface ITareaFilters {
   fecha?: string;
   desde?: string;
   hasta?: string;
+  // Admin-only: view a specific collaborator's tasks.
+  owner?: number;
 }

@@ -18,11 +18,11 @@ export function useListasController() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function _list() {
+  async function _list(owner?: number) {
     setLoading(true);
     setError(null);
     try {
-      const result = await listListas();
+      const result = await listListas(owner);
       setListas(result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar listas");

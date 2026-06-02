@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { esAdmin } from "@/shared/lib/auth-guards";
 import { prisma } from "@/shared/lib/prisma";
 import { createTareaSchema } from "@/shared/validation/tarea.schema";
 import type { ITarea } from "@/modules/tareas/domain/entities/Tarea.entities";
@@ -30,9 +31,17 @@ export async function GET(req: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  const ownerId = session.user?.userId as number;
-
+  const sessionUserId = session.user?.userId as number;
   const { searchParams } = req.nextUrl;
+
+  // Admins may inspect a collaborator's tasks via ?owner=<id>; employees are
+  // always scoped to their own tasks regardless of the param.
+  const ownerParam = searchParams.get("owner");
+  const ownerId =
+    esAdmin(session.user?.rol) && ownerParam
+      ? Number(ownerParam)
+      : sessionUserId;
+
   const fecha = searchParams.get("fecha");
   const desde = searchParams.get("desde");
   const hasta = searchParams.get("hasta");
@@ -69,7 +78,7 @@ export async function POST(req: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  const ownerId = session.user?.userId as number;
+  const sessionUserId = session.user?.userId as number;
 
   const body = await req.json();
   const parsed = createTareaSchema.safeParse(body);
@@ -82,7 +91,12 @@ export async function POST(req: NextRequest) {
 
   const data = parsed.data;
 
-  // Verify the lista exists and belongs to this user
+  // Admins may assign the task to a collaborator (data.ownerId); employees
+  // always create for themselves.
+  const ownerId =
+    esAdmin(session.user?.rol) && data.ownerId ? data.ownerId : sessionUserId;
+
+  // The chosen lista must belong to the resolved owner.
   const lista = await prisma.listaTarea.findFirst({
     where: { id: data.listaId, ownerId },
   });
@@ -102,8 +116,8 @@ export async function POST(req: NextRequest) {
       fecha: new Date(data.fecha + "T00:00:00.000Z"),
       horaInicio: data.horaInicio,
       horaFin: data.horaFin,
-      // Use provided color, else fall back to the lista's default
-      color: data.color ?? lista.colorDefault ?? null,
+      // Color always inherited from the list
+      color: lista.colorDefault ?? null,
       completada: false,
     },
     include: { lista: true },

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-// Slots de 30 min entre 08:00 y 18:00 (24h)
-const HORA = /^(0[8-9]|1[0-8]):(00|30)$/;
+// Slots de 30 min entre 05:00 y 23:00 (24h)
+const HORA = /^(0[5-9]|1[0-9]|2[0-3]):(00|30)$/;
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
 export const createTareaSchema = z
@@ -10,9 +10,11 @@ export const createTareaSchema = z
     fecha: z.string().regex(FECHA, "fecha inválida (YYYY-MM-DD)"),
     nombre: z.string().min(1, "requerido").max(300),
     descripcion: z.string().max(2000).optional(),
-    horaInicio: z.string().regex(HORA, "slot inválido (08:00–18:00, :00 o :30)"),
-    horaFin: z.string().regex(HORA, "slot inválido (08:00–18:00, :00 o :30)"),
+    horaInicio: z.string().regex(HORA, "slot inválido (05:00–23:00, :00 o :30)"),
+    horaFin: z.string().regex(HORA, "slot inválido (05:00–23:00, :00 o :30)"),
     color: z.string().max(20).optional(),
+    // Admin-only: assign the task to a collaborator. Ignored for employees.
+    ownerId: z.coerce.number().int().positive().optional(),
   })
   .refine((d) => d.horaFin > d.horaInicio, {
     message: "hora fin debe ser mayor a hora inicio",

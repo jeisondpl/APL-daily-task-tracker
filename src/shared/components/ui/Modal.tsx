@@ -16,20 +16,30 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   // Store the element that was focused before the modal opened so we can restore it on close.
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  // Keep the latest onClose in a ref so the focus effect never needs it as a
+  // dependency. Without this, an unstable onClose (re-created every parent
+  // render) would re-run the effect on every keystroke and steal input focus.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
 
     previousFocusRef.current = document.activeElement as HTMLElement;
-    // Move focus into the panel on the next tick so the DOM is painted.
+    // Focus the first field (so the user can type immediately), or the panel.
     const frame = requestAnimationFrame(() => {
-      panelRef.current?.focus();
+      const firstField = panelRef.current?.querySelector<HTMLElement>(
+        "input, select, textarea",
+      );
+      (firstField ?? panelRef.current)?.focus();
     });
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
       }
     }
 
@@ -41,7 +51,8 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
       // Restore focus when the modal unmounts or closes.
       previousFocusRef.current?.focus();
     };
-  }, [open, onClose]);
+    // Intentionally depends only on `open` — see onCloseRef above.
+  }, [open]);
 
   if (!open) return null;
 

@@ -2,15 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/shared/lib/utils";
 
-const NAV_ITEMS = [
+const ADMIN_ITEMS = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/listas", label: "Listas" },
+  { href: "/usuarios", label: "Usuarios" },
+];
+
+const EMPLOYEE_ITEMS = [
   { href: "/tareas", label: "Tareas" },
   { href: "/listas", label: "Listas" },
-] as const;
+];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const rol = session?.user?.rol;
+  const isAdmin = rol === "Administrador" || rol === "ADMIN";
+
+  // Admins plan & assign (no own "Tareas"); employees execute their own.
+  const navItems = isAdmin ? ADMIN_ITEMS : EMPLOYEE_ITEMS;
 
   return (
     <nav
@@ -25,7 +38,7 @@ export function Sidebar() {
         Daily Tracker
       </p>
 
-      {NAV_ITEMS.map(({ href, label }) => {
+      {navItems.map(({ href, label }) => {
         const isActive = pathname.startsWith(href);
 
         return (

@@ -5,8 +5,10 @@ import type {
   IUpdateListaDTO,
 } from "@/modules/listas-tareas/domain/entities/ListaTarea.entities";
 
-async function list(): Promise<IListaTarea[]> {
-  const { data } = await api.get<IListaTarea[]>("/listas-tareas");
+async function list(owner?: number): Promise<IListaTarea[]> {
+  const { data } = await api.get<IListaTarea[]>("/listas-tareas", {
+    params: owner ? { owner } : undefined,
+  });
   return data;
 }
 

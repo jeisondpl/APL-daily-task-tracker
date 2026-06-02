@@ -18,7 +18,7 @@ function generateSlots(from: string, to: string, stepMin: number): string[] {
   return out;
 }
 
-const SLOTS = generateSlots("08:00", "18:00", 30);
+const SLOTS = generateSlots("05:00", "23:00", 30);
 
 function slotInRange(slot: string, hIni: string, hFin: string): boolean {
   return slot >= hIni && slot < hFin;

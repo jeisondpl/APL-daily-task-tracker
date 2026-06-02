@@ -4,7 +4,8 @@ import type {
   IUpdateListaDTO,
 } from "@/modules/listas-tareas/domain/entities/ListaTarea.entities";
 
-export const listListas = () => apiListasRepository.list();
+export const listListas = (owner?: number) =>
+  apiListasRepository.list(owner);
 
 export const getListaById = (id: number) => apiListasRepository.getById(id);
 

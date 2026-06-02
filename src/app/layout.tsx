@@ -20,7 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={inter.variable}>
-      <body>{children}</body>
+      {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla's
+          cz-shortcut-listen) inject attributes into <body> before hydration. */}
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

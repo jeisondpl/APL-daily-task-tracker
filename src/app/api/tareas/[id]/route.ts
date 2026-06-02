@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { esAdmin } from "@/shared/lib/auth-guards";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTareaSchema } from "@/shared/validation/tarea.schema";
 import type { ITarea } from "@/modules/tareas/domain/entities/Tarea.entities";
@@ -27,12 +28,17 @@ function mapToITarea(row: TareaWithLista): ITarea {
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+// An employee may only touch their own tasks; an admin may touch anyone's.
+function canAccess(taskOwnerId: number, sessionUserId: number, rol?: string) {
+  return esAdmin(rol) || taskOwnerId === sessionUserId;
+}
+
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  const ownerId = session.user?.userId as number;
+  const sessionUserId = session.user?.userId as number;
   const { id } = await params;
 
   const tarea = await prisma.tarea.findUnique({
@@ -40,7 +46,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     include: { lista: true },
   });
 
-  if (!tarea || tarea.ownerId !== ownerId) {
+  if (!tarea || !canAccess(tarea.ownerId, sessionUserId, session.user?.rol)) {
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 
@@ -52,11 +58,11 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
   if (!session) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  const ownerId = session.user?.userId as number;
+  const sessionUserId = session.user?.userId as number;
   const { id } = await params;
 
   const tarea = await prisma.tarea.findUnique({ where: { id: Number(id) } });
-  if (!tarea || tarea.ownerId !== ownerId) {
+  if (!tarea || !canAccess(tarea.ownerId, sessionUserId, session.user?.rol)) {
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 
@@ -65,24 +71,34 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Datos inválidos", issues: parsed.error.issues },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   const data = parsed.data;
+
+  // Color always follows the (possibly new) list, scoped to the task's OWNER
+  // (not the requester — an admin edits a collaborator's task).
+  const effectiveListaId = data.listaId ?? tarea.listaId;
+  const lista = await prisma.listaTarea.findFirst({
+    where: { id: effectiveListaId, ownerId: tarea.ownerId },
+  });
+  if (!lista) {
+    return NextResponse.json({ error: "Lista no encontrada" }, { status: 400 });
+  }
+
   const updated = await prisma.tarea.update({
     where: { id: Number(id) },
     data: {
       ...(data.listaId !== undefined && { listaId: data.listaId }),
       ...(data.nombre !== undefined && { nombre: data.nombre }),
       ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
-      // Convert YYYY-MM-DD string to Date stored as UTC midnight
       ...(data.fecha !== undefined && {
         fecha: new Date(data.fecha + "T00:00:00.000Z"),
       }),
       ...(data.horaInicio !== undefined && { horaInicio: data.horaInicio }),
       ...(data.horaFin !== undefined && { horaFin: data.horaFin }),
-      ...(data.color !== undefined && { color: data.color }),
+      color: lista.colorDefault,
       ...(data.completada !== undefined && { completada: data.completada }),
     },
     include: { lista: true },
@@ -96,11 +112,11 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
   if (!session) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  const ownerId = session.user?.userId as number;
+  const sessionUserId = session.user?.userId as number;
   const { id } = await params;
 
   const tarea = await prisma.tarea.findUnique({ where: { id: Number(id) } });
-  if (!tarea || tarea.ownerId !== ownerId) {
+  if (!tarea || !canAccess(tarea.ownerId, sessionUserId, session.user?.rol)) {
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 

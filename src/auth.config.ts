@@ -3,6 +3,9 @@ import type { NextAuthConfig } from "next-auth";
 // Edge-safe config: no DB client, no hashing lib. Imported by middleware.ts.
 export const authConfig = {
   secret: process.env.AUTH_SECRET,
+  // Trust the incoming request host so login works from localhost AND the LAN
+  // IP (or any host) in dev, not only the host in AUTH_URL.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [],

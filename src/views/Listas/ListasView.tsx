@@ -251,14 +251,46 @@ export function ListasView() {
             }
             placeholder="Descripción (opcional)"
           />
-          <Input
-            label="Color por defecto"
-            type="color"
-            value={formState.colorDefault}
-            onChange={(e) =>
-              setFormState((prev) => ({ ...prev, colorDefault: e.target.value }))
-            }
-          />
+          <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <span
+              style={{
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                color: "var(--color-text)",
+              }}
+            >
+              Color por defecto
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <input
+                type="color"
+                value={formState.colorDefault || "#10B981"}
+                onChange={(e) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    colorDefault: e.target.value,
+                  }))
+                }
+                style={{
+                  width: "56px",
+                  height: "36px",
+                  padding: "2px",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "8px",
+                  background: "var(--color-surface)",
+                  cursor: "pointer",
+                }}
+              />
+              <code
+                style={{
+                  fontSize: "0.8125rem",
+                  color: "var(--color-text-soft)",
+                }}
+              >
+                {(formState.colorDefault || "#10B981").toUpperCase()}
+              </code>
+            </span>
+          </label>
         </div>
       </Modal>
     </div>

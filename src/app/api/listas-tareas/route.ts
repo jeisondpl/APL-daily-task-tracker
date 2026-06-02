@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { esAdmin } from "@/shared/lib/auth-guards";
 import { prisma } from "@/shared/lib/prisma";
 import { createListaSchema } from "@/shared/validation/lista.schema";
 import type { IListaTarea } from "@/modules/listas-tareas/domain/entities/ListaTarea.entities";
@@ -20,12 +21,20 @@ function mapToIListaTarea(row: ListaWithCount): IListaTarea {
   };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  const ownerId = session.user?.userId as number;
+  const sessionUserId = session.user?.userId as number;
+
+  // Admins may read a collaborator's lists via ?owner=<id> (for assigning
+  // tasks to them); employees only ever see their own.
+  const ownerParam = req.nextUrl.searchParams.get("owner");
+  const ownerId =
+    esAdmin(session.user?.rol) && ownerParam
+      ? Number(ownerParam)
+      : sessionUserId;
 
   const rows = await prisma.listaTarea.findMany({
     where: { ownerId },

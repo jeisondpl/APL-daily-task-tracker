@@ -119,6 +119,58 @@ body {
   }
 }
 
+/* react-day-picker (MesCalendario) — INDRA theming */
+.dtt-calendar .rdp-month_caption {
+  text-transform: capitalize;
+  color: var(--color-text);
+  font-weight: 700;
+}
+.dtt-calendar .rdp-weekday {
+  color: var(--color-text-soft);
+  text-transform: capitalize;
+  font-weight: 600;
+}
+.dtt-calendar .rdp-chevron {
+  fill: var(--color-petroleum);
+}
+.dtt-calendar .rdp-day_button {
+  position: relative;
+  border-radius: 8px;
+}
+.dtt-calendar .rdp-selected .rdp-day_button {
+  background-color: var(--color-petroleum);
+  color: var(--color-text-invert);
+  border: none;
+}
+.dtt-calendar .rdp-today:not(.rdp-selected) .rdp-day_button {
+  color: var(--color-accent-orange);
+  font-weight: 800;
+}
+.dtt-cal-count {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-text-invert);
+  background-color: var(--color-success);
+  border-radius: 999px;
+  min-width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+.dtt-calendar .rdp-selected .dtt-cal-count {
+  background-color: var(--color-accent-orange);
+}
+.dtt-cal-today-btn:hover {
+  background-color: var(--color-bg) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -10,9 +10,14 @@ function today(): Date {
 
 async function main() {
   const rolAdmin = await prisma.rol.upsert({
-    where: { nombre: "ADMIN" },
+    where: { nombre: "Administrador" },
     update: {},
-    create: { nombre: "ADMIN" },
+    create: { nombre: "Administrador" },
+  });
+  await prisma.rol.upsert({
+    where: { nombre: "Empleado" },
+    update: {},
+    create: { nombre: "Empleado" },
   });
 
   const passwordHash = await bcrypt.hash("Demo2026!", 10);
@@ -23,6 +28,17 @@ async function main() {
       nombre: "Administrador",
       email: "admin@local",
       passwordHash,
+      rolId: rolAdmin.id,
+    },
+  });
+
+  await prisma.usuario.upsert({
+    where: { email: "jeison@daily.com" },
+    update: {},
+    create: {
+      nombre: "Jeison",
+      email: "jeison@daily.com",
+      passwordHash: await bcrypt.hash("Jeison2026!", 10),
       rolId: rolAdmin.id,
     },
   });
