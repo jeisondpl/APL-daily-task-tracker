@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { esAdmin } from "@/shared/lib/auth-guards";
+import { esAdmin, requireAdmin } from "@/shared/lib/auth-guards";
 import { prisma } from "@/shared/lib/prisma";
 import { createListaSchema } from "@/shared/validation/lista.schema";
 import type { IListaTarea } from "@/modules/listas-tareas/domain/entities/ListaTarea.entities";
@@ -62,11 +62,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const adminCheck = await requireAdmin();
+  if (!adminCheck.ok) {
+    return NextResponse.json({ error: adminCheck.error }, { status: adminCheck.status });
   }
-  const ownerId = session.user?.userId as number;
+  const ownerId = adminCheck.userId;
 
   const body = await req.json();
   const parsed = createListaSchema.safeParse(body);
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       nombre: data.nombre,
       descripcion: data.descripcion ?? null,
       colorDefault: data.colorDefault ?? undefined,
-      esCompartida: data.esCompartida ?? false,
+      esCompartida: true, // Siempre compartida para todo el equipo
     },
     include: { _count: { select: { tareas: true } }, owner: { select: { nombre: true } } },
   });

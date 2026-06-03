@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { requireAdmin } from "@/shared/lib/auth-guards";
 import { prisma } from "@/shared/lib/prisma";
 import { updateListaSchema } from "@/shared/validation/lista.schema";
 import type { IListaTarea } from "@/modules/listas-tareas/domain/entities/ListaTarea.entities";
@@ -48,15 +49,14 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 }
 
 export async function PUT(req: NextRequest, { params }: RouteContext) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const adminCheck = await requireAdmin();
+  if (!adminCheck.ok) {
+    return NextResponse.json({ error: adminCheck.error }, { status: adminCheck.status });
   }
-  const ownerId = session.user?.userId as number;
   const { id } = await params;
 
   const lista = await prisma.listaTarea.findUnique({ where: { id: Number(id) } });
-  if (!lista || lista.ownerId !== ownerId) {
+  if (!lista) {
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 
@@ -85,15 +85,14 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: RouteContext) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const adminCheck = await requireAdmin();
+  if (!adminCheck.ok) {
+    return NextResponse.json({ error: adminCheck.error }, { status: adminCheck.status });
   }
-  const ownerId = session.user?.userId as number;
   const { id } = await params;
 
   const lista = await prisma.listaTarea.findUnique({ where: { id: Number(id) } });
-  if (!lista || lista.ownerId !== ownerId) {
+  if (!lista) {
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 

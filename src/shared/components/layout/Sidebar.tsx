@@ -15,7 +15,6 @@ const ADMIN_ITEMS = [
 const EMPLOYEE_ITEMS = [
   { href: '/tareas', label: 'Tareas' },
   { href: '/tareas-pendientes', label: 'Pendientes' },
-  { href: '/listas', label: 'Listas' },
 ]
 
 export function Sidebar() {
