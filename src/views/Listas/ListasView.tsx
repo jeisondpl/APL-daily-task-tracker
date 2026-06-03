@@ -30,6 +30,8 @@ export function ListasView() {
   const { listas, loading, error, _list, _create, _update, _delete } = useListasController()
   const { data: session } = useSession()
   const currentUserId = (session?.user as { userId?: number })?.userId
+  const rol = (session?.user as { rol?: string })?.rol
+  const isAdmin = rol === 'Administrador' || rol === 'ADMIN'
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -181,7 +183,7 @@ export function ListasView() {
                     <Td>{lista.esCompartida ? <Badge variant='success'>Sí</Badge> : <Badge variant='neutral'>No</Badge>}</Td>
                     <Td style={{ color: 'var(--color-text-soft)', fontSize: '0.8125rem' }}>{isOwner ? 'Vos' : (lista.ownerNombre ?? '—')}</Td>
                     <Td>
-                      {isOwner ? (
+                      {isAdmin ? (
                         <span style={{ display: 'flex', gap: '8px' }}>
                           <Button variant='ghost' size='sm' onClick={() => openEdit(lista)}>
                             Editar
