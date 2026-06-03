@@ -96,9 +96,12 @@ export async function POST(req: NextRequest) {
   const ownerId =
     esAdmin(session.user?.rol) && data.ownerId ? data.ownerId : sessionUserId;
 
-  // The chosen lista must belong to the resolved owner.
+  // The chosen lista must belong to the owner OR be shared (accessible to all).
   const lista = await prisma.listaTarea.findFirst({
-    where: { id: data.listaId, ownerId },
+    where: {
+      id: data.listaId,
+      OR: [{ ownerId }, { esCompartida: true }],
+    },
   });
   if (!lista) {
     return NextResponse.json(
