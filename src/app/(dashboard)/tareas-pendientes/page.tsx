@@ -89,8 +89,10 @@ export default function TareasPendientesPage() {
         await ctrl._create(dto)
       }
       setModalOpen(false)
-    } catch (e: any) {
-      setFormError(e?.response?.data?.error ?? e.message ?? 'Error al guardar')
+    } catch (e: unknown) {
+      const err = e as Record<string, unknown>
+      const msg = (err?.response as Record<string, unknown>)?.data as Record<string, unknown>
+      setFormError((msg?.error as string) ?? (err?.message as string) ?? 'Error al guardar')
     } finally {
       setSubmitting(false)
     }

@@ -20,8 +20,10 @@ export function useTareasPendientesController() {
         try {
             const data = await repo.list();
             setPendientes(data);
-        } catch (e: any) {
-            setError(e?.response?.data?.error ?? e.message);
+        } catch (e: unknown) {
+            const err = e as Record<string, unknown>
+            const msg = (err?.response as Record<string, unknown>)?.data as Record<string, unknown>
+            setError((msg?.error as string) ?? (err?.message as string) ?? 'Error');
         } finally {
             setLoading(false);
         }

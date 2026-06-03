@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useTareasPendientesController } from '@/modules/tareas-pendientes/presentation/hooks/useTareasPendientesController'
 import type { IListaTarea } from '@/modules/listas-tareas/domain/entities/ListaTarea.entities'
 import type { IReclamarTareaPendienteDTO } from '@/modules/tareas-pendientes/domain/entities/TareaPendiente.entities'
-import { Badge } from '@/shared/components/ui/Badge'
 import { Button } from '@/shared/components/ui/Button'
 import { Modal } from '@/shared/components/ui/Modal'
 import { Select } from '@/shared/components/ui/Select'
@@ -60,8 +59,10 @@ export function MisPendientes({ listas, fecha, onReclamada }: Props) {
       await ctrl._reclamar(reclamarId!, dto)
       setReclamarId(null)
       onReclamada()
-    } catch (e: any) {
-      setFormError(e?.response?.data?.error ?? e.message ?? 'Error')
+    } catch (e: unknown) {
+      const err = e as Record<string, unknown>
+      const msg = (err?.response as Record<string, unknown>)?.data as Record<string, unknown>
+      setFormError((msg?.error as string) ?? (err?.message as string) ?? 'Error')
     } finally {
       setSubmitting(false)
     }

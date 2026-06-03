@@ -5,6 +5,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { createTareaPendienteSchema } from "@/shared/validation/tarea-pendiente.schema";
 import type { ITareaPendiente } from "@/modules/tareas-pendientes/domain/entities/TareaPendiente.entities";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRow(row: any): ITareaPendiente {
     return {
         id: row.id,
