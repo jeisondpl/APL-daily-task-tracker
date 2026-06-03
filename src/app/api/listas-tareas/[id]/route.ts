@@ -3,17 +3,22 @@ import { auth } from "@/auth";
 import { prisma } from "@/shared/lib/prisma";
 import { updateListaSchema } from "@/shared/validation/lista.schema";
 import type { IListaTarea } from "@/modules/listas-tareas/domain/entities/ListaTarea.entities";
-import type { ListaTarea } from "@prisma/client";
+import type { ListaTarea, Usuario } from "@prisma/client";
 
-type ListaWithCount = ListaTarea & { _count: { tareas: number } };
+type ListaWithCountAndOwner = ListaTarea & {
+  _count: { tareas: number };
+  owner: Pick<Usuario, "nombre">;
+};
 
-function mapToIListaTarea(row: ListaWithCount): IListaTarea {
+function mapToIListaTarea(row: ListaWithCountAndOwner): IListaTarea {
   return {
     id: row.id,
     ownerId: row.ownerId,
+    ownerNombre: row.owner.nombre,
     nombre: row.nombre,
     descripcion: row.descripcion ?? undefined,
     colorDefault: row.colorDefault ?? undefined,
+    esCompartida: row.esCompartida,
     tareasCount: row._count.tareas,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -32,7 +37,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
 
   const lista = await prisma.listaTarea.findUnique({
     where: { id: Number(id) },
-    include: { _count: { select: { tareas: true } } },
+    include: { _count: { select: { tareas: true } }, owner: { select: { nombre: true } } },
   });
 
   if (!lista || lista.ownerId !== ownerId) {
@@ -71,8 +76,9 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       ...(data.nombre !== undefined && { nombre: data.nombre }),
       ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
       ...(data.colorDefault !== undefined && { colorDefault: data.colorDefault }),
+      ...(data.esCompartida !== undefined && { esCompartida: data.esCompartida }),
     },
-    include: { _count: { select: { tareas: true } } },
+    include: { _count: { select: { tareas: true } }, owner: { select: { nombre: true } } },
   });
 
   return NextResponse.json(mapToIListaTarea(updated));

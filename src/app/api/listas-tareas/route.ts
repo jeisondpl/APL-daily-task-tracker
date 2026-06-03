@@ -4,17 +4,22 @@ import { esAdmin } from "@/shared/lib/auth-guards";
 import { prisma } from "@/shared/lib/prisma";
 import { createListaSchema } from "@/shared/validation/lista.schema";
 import type { IListaTarea } from "@/modules/listas-tareas/domain/entities/ListaTarea.entities";
-import type { ListaTarea } from "@prisma/client";
+import type { ListaTarea, Usuario } from "@prisma/client";
 
-type ListaWithCount = ListaTarea & { _count: { tareas: number } };
+type ListaWithCountAndOwner = ListaTarea & {
+  _count: { tareas: number };
+  owner: Pick<Usuario, "nombre">;
+};
 
-function mapToIListaTarea(row: ListaWithCount): IListaTarea {
+function mapToIListaTarea(row: ListaWithCountAndOwner): IListaTarea {
   return {
     id: row.id,
     ownerId: row.ownerId,
+    ownerNombre: row.owner.nombre,
     nombre: row.nombre,
     descripcion: row.descripcion ?? undefined,
     colorDefault: row.colorDefault ?? undefined,
+    esCompartida: row.esCompartida,
     tareasCount: row._count.tareas,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -28,19 +33,30 @@ export async function GET(req: NextRequest) {
   }
   const sessionUserId = session.user?.userId as number;
 
-  // Admins may read a collaborator's lists via ?owner=<id> (for assigning
-  // tasks to them); employees only ever see their own.
+  // Admins may read a specific owner's lists via ?owner=<id>;
+  // otherwise return own lists + all shared lists from other users.
   const ownerParam = req.nextUrl.searchParams.get("owner");
-  const ownerId =
-    esAdmin(session.user?.rol) && ownerParam
-      ? Number(ownerParam)
-      : sessionUserId;
 
-  const rows = await prisma.listaTarea.findMany({
-    where: { ownerId },
-    include: { _count: { select: { tareas: true } } },
-    orderBy: { nombre: "asc" },
-  });
+  let rows: ListaWithCountAndOwner[];
+
+  if (esAdmin(session.user?.rol) && ownerParam) {
+    rows = await prisma.listaTarea.findMany({
+      where: { ownerId: Number(ownerParam) },
+      include: { _count: { select: { tareas: true } }, owner: { select: { nombre: true } } },
+      orderBy: { nombre: "asc" },
+    });
+  } else {
+    rows = await prisma.listaTarea.findMany({
+      where: {
+        OR: [
+          { ownerId: sessionUserId },
+          { esCompartida: true },
+        ],
+      },
+      include: { _count: { select: { tareas: true } }, owner: { select: { nombre: true } } },
+      orderBy: { nombre: "asc" },
+    });
+  }
 
   return NextResponse.json(rows.map(mapToIListaTarea));
 }
@@ -68,8 +84,9 @@ export async function POST(req: NextRequest) {
       nombre: data.nombre,
       descripcion: data.descripcion ?? null,
       colorDefault: data.colorDefault ?? undefined,
+      esCompartida: data.esCompartida ?? false,
     },
-    include: { _count: { select: { tareas: true } } },
+    include: { _count: { select: { tareas: true } }, owner: { select: { nombre: true } } },
   });
 
   return NextResponse.json(mapToIListaTarea(created), { status: 201 });

@@ -38,6 +38,7 @@ model ListaTarea {
   nombre       String   @db.VarChar(200)
   descripcion  String?  @db.Text
   colorDefault String   @default("#10B981") @map("color_default") @db.VarChar(20)
+  esCompartida Boolean  @default(false) @map("es_compartida")
   ownerId      Int      @map("owner_id")
   owner        Usuario  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now()) @map("fecha_creacion")

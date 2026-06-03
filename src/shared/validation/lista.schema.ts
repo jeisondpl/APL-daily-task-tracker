@@ -4,6 +4,7 @@ export const createListaSchema = z.object({
   nombre: z.string().min(1, "requerido").max(200),
   descripcion: z.string().max(2000).optional(),
   colorDefault: z.string().max(20).optional(),
+  esCompartida: z.boolean().optional(),
 });
 
 export const updateListaSchema = createListaSchema.partial();
