@@ -27,8 +27,10 @@ model Usuario {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  listasTareas ListaTarea[]
-  tareas       Tarea[]
+  listasTareas    ListaTarea[]
+  tareas          Tarea[]
+  tareasAsignadas TareaPendiente[] @relation("AsignadoA")
+  tareasCreadas   TareaPendiente[] @relation("CreadoPor")
 
   @@map("usuarios")
 }
@@ -70,4 +72,21 @@ model Tarea {
   @@index([listaId])
   @@index([ownerId, fecha])
   @@map("tareas")
+}
+
+model TareaPendiente {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @db.VarChar(300)
+  descripcion String?  @db.Text
+  color       String   @default("#10B981") @db.VarChar(20)
+  creadoPorId Int      @map("creado_por_id")
+  creadoPor   Usuario  @relation("CreadoPor", fields: [creadoPorId], references: [id], onDelete: Cascade)
+  asignadoAId Int?     @map("asignado_a_id")
+  asignadoA   Usuario? @relation("AsignadoA", fields: [asignadoAId], references: [id], onDelete: SetNull)
+  reclamada   Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([asignadoAId])
+  @@map("tareas_pendientes")
 }
