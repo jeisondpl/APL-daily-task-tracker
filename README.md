@@ -47,7 +47,7 @@ docker run -d \
   -e POSTGRES_USER=dtt \
   -e POSTGRES_PASSWORD=dttpass \
   -e POSTGRES_DB=daily_task_tracker \
-  -p 5432:5432 \
+  -p 5435:5432 \
   postgres:16-alpine
 ```
 
@@ -60,8 +60,8 @@ cp .env.example .env
 El `.env` local ya viene preconfigurado para apuntar al contenedor Docker:
 
 ```env
-DATABASE_URL="postgresql://dtt:dttpass@localhost:5432/daily_task_tracker"
-DIRECT_URL="postgresql://dtt:dttpass@localhost:5432/daily_task_tracker"
+DATABASE_URL="postgresql://dtt:dttpass@localhost:5435/daily_task_tracker"
+DIRECT_URL="postgresql://dtt:dttpass@localhost:5435/daily_task_tracker"
 AUTH_SECRET="<generá uno con: openssl rand -base64 32>"
 AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_API_URL="http://localhost:3000"

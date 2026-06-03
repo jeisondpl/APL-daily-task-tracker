@@ -10,11 +10,6 @@ const STATS = [
   { value: "30m", label: "Slots" },
 ];
 
-const TEST_USERS = [
-  { email: "admin@local", rol: "Administrador", password: "Demo2026!" },
-  { email: "jeison@daily.com", rol: "Administrador", password: "Jeison2026!" },
-];
-
 function Wordmark({ invert = false }: { invert?: boolean }) {
   const color = invert ? "var(--color-text-invert)" : "var(--color-petroleum)";
   return (
@@ -246,36 +241,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Test users (demo) */}
-          <div
-            className="mt-8 p-4 rounded-xl text-xs space-y-2"
-            style={{
-              backgroundColor: "rgba(0,66,84,0.06)",
-              border: "1px solid var(--color-border)",
-            }}
-          >
-            <p className="font-semibold" style={{ color: "var(--color-text-soft)" }}>
-              Usuarios de prueba (clic para autocompletar)
-            </p>
-            {TEST_USERS.map((u) => (
-              <div key={u.email} className="flex justify-between items-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail(u.email);
-                    setPassword(u.password);
-                  }}
-                  className="font-mono hover:underline rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-petroleum)]"
-                  style={{ color: "var(--color-petroleum)" }}
-                  aria-label={`Rellenar con credenciales de ${u.email} (${u.rol})`}
-                >
-                  {u.email}
-                </button>
-                <span style={{ color: "var(--color-text-soft)" }}>{u.rol}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </main>
     </div>
