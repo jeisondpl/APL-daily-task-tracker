@@ -27,6 +27,8 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
             ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
             ...(data.color !== undefined && { color: data.color }),
             ...(data.asignadoAId !== undefined && { asignadoAId: data.asignadoAId }),
+            ...(data.fechaInicio !== undefined && { fechaInicio: new Date(data.fechaInicio) }),
+            ...(data.fechaFin !== undefined && { fechaFin: new Date(data.fechaFin) }),
         },
         include: {
             creadoPor: { select: { nombre: true } },

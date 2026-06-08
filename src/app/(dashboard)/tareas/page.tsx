@@ -117,7 +117,7 @@ export default function TareasPage() {
 
         {/* Right: selected day's schedule */}
         <div style={{ flex: 1, minWidth: '320px' }}>
-          <MisPendientes listas={listasCtrl.listas} fecha={selectedDate} onReclamada={reloadMonth} />
+          <MisPendientes fecha={selectedDate} onReclamada={reloadMonth} />
           <div
             style={{
               display: 'flex',

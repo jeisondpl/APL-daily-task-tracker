@@ -10,6 +10,7 @@ export interface ITarea {
   horaFin: string; // HH:MM
   color: string;
   completada: boolean;
+  origenPendienteId?: number | null;
   createdAt: string;
   updatedAt: string;
 }

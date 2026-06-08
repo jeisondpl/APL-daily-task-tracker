@@ -16,20 +16,17 @@ interface ListaFormState {
   nombre: string
   descripcion: string
   colorDefault: string
-  esCompartida: boolean
 }
 
 const EMPTY_FORM: ListaFormState = {
   nombre: '',
   descripcion: '',
   colorDefault: '#10B981',
-  esCompartida: false,
 }
 
 export function ListasView() {
   const { listas, loading, error, _list, _create, _update, _delete } = useListasController()
   const { data: session } = useSession()
-  const currentUserId = (session?.user as { userId?: number })?.userId
   const rol = (session?.user as { rol?: string })?.rol
   const isAdmin = rol === 'Administrador' || rol === 'ADMIN'
 
@@ -58,7 +55,6 @@ export function ListasView() {
       nombre: lista.nombre,
       descripcion: lista.descripcion ?? '',
       colorDefault: lista.colorDefault ?? '#10B981',
-      esCompartida: lista.esCompartida ?? false,
     })
     setFormError(null)
     setIsModalOpen(true)
@@ -82,7 +78,6 @@ export function ListasView() {
           nombre: formState.nombre,
           descripcion: formState.descripcion || undefined,
           colorDefault: formState.colorDefault || undefined,
-          esCompartida: formState.esCompartida,
         }
         await _update(editingLista.id, dto)
       } else {
@@ -90,7 +85,7 @@ export function ListasView() {
           nombre: formState.nombre,
           descripcion: formState.descripcion || undefined,
           colorDefault: formState.colorDefault || undefined,
-          esCompartida: formState.esCompartida,
+          esCompartida: true,
         }
         await _create(dto)
       }
@@ -141,22 +136,18 @@ export function ListasView() {
               <Th>Descripción</Th>
               <Th>Color</Th>
               <Th>Tareas</Th>
-              <Th>Compartida</Th>
-              <Th>Propietario</Th>
               <Th>Acciones</Th>
             </Tr>
           </THead>
           <TBody>
             {listas.length === 0 ? (
               <Tr>
-                <Td colSpan={7} style={{ textAlign: 'center', color: 'var(--color-text-soft)' }}>
+                <Td colSpan={5} style={{ textAlign: 'center', color: 'var(--color-text-soft)' }}>
                   No hay listas todavía. ¡Creá una nueva!
                 </Td>
               </Tr>
             ) : (
-              listas.map((lista) => {
-                const isOwner = lista.ownerId === currentUserId
-                return (
+              listas.map((lista) => (
                   <Tr key={lista.id}>
                     <Td>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -180,8 +171,6 @@ export function ListasView() {
                     <Td>
                       <Badge variant='neutral'>{lista.tareasCount ?? 0}</Badge>
                     </Td>
-                    <Td>{lista.esCompartida ? <Badge variant='success'>Sí</Badge> : <Badge variant='neutral'>No</Badge>}</Td>
-                    <Td style={{ color: 'var(--color-text-soft)', fontSize: '0.8125rem' }}>{isOwner ? 'Vos' : (lista.ownerNombre ?? '—')}</Td>
                     <Td>
                       {isAdmin ? (
                         <span style={{ display: 'flex', gap: '8px' }}>
@@ -197,8 +186,7 @@ export function ListasView() {
                       )}
                     </Td>
                   </Tr>
-                )
-              })
+              ))
             )}
           </TBody>
         </Table>
@@ -274,23 +262,6 @@ export function ListasView() {
                 {(formState.colorDefault || '#10B981').toUpperCase()}
               </code>
             </span>
-          </label>
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              cursor: 'pointer',
-              userSelect: 'none',
-            }}
-          >
-            <input
-              type='checkbox'
-              checked={formState.esCompartida}
-              onChange={(e) => setFormState((prev) => ({ ...prev, esCompartida: e.target.checked }))}
-              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-            />
-            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text)' }}>Compartir con todos los usuarios</span>
           </label>
         </div>
       </Modal>

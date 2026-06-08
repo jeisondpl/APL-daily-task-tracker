@@ -19,8 +19,9 @@ function mapToITarea(row: TareaWithLista): ITarea {
     fecha: row.fecha.toISOString().slice(0, 10),
     horaInicio: row.horaInicio,
     horaFin: row.horaFin,
-    color: row.color ?? undefined,
+    color: row.color ?? row.lista.colorDefault ?? '#8661F5',
     completada: row.completada,
+    origenPendienteId: row.origenPendienteId ?? undefined,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

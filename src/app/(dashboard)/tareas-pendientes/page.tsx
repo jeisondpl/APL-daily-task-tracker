@@ -25,13 +25,17 @@ export default function TareasPendientesPage() {
 
   const ctrl = useTareasPendientesController()
   const [usuarios, setUsuarios] = useState<UsuarioOption[]>([])
+  const [listas, setListas] = useState<{ id: number; nombre: string }[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<ITareaPendiente | null>(null)
 
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [color, setColor] = useState('#10B981')
+  const [listaId, setListaId] = useState<string>('')
   const [asignadoAId, setAsignadoAId] = useState<string>('')
+  const [fechaInicio, setFechaInicio] = useState('')
+  const [fechaFin, setFechaFin] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -39,6 +43,7 @@ export default function TareasPendientesPage() {
     ctrl._list()
     if (isAdmin) {
       api.get('/usuarios').then((r: { data: UsuarioOption[] }) => setUsuarios(r.data))
+      api.get('/listas-tareas').then((r: { data: { id: number; nombre: string }[] }) => setListas(r.data))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin])
@@ -48,7 +53,10 @@ export default function TareasPendientesPage() {
     setNombre('')
     setDescripcion('')
     setColor('#10B981')
+    setListaId('')
     setAsignadoAId('')
+    setFechaInicio('')
+    setFechaFin('')
     setFormError(null)
     setModalOpen(true)
   }
@@ -58,7 +66,10 @@ export default function TareasPendientesPage() {
     setNombre(tp.nombre)
     setDescripcion(tp.descripcion ?? '')
     setColor(tp.color)
+    setListaId(tp.listaId ? String(tp.listaId) : '')
     setAsignadoAId(tp.asignadoAId ? String(tp.asignadoAId) : '')
+    setFechaInicio(tp.fechaInicio ?? '')
+    setFechaFin(tp.fechaFin ?? '')
     setFormError(null)
     setModalOpen(true)
   }
@@ -66,6 +77,14 @@ export default function TareasPendientesPage() {
   async function handleSubmit() {
     if (!nombre.trim()) {
       setFormError('El nombre es obligatorio')
+      return
+    }
+    if (!fechaInicio || !fechaFin) {
+      setFormError('Las fechas de inicio y fin son obligatorias')
+      return
+    }
+    if (fechaFin < fechaInicio) {
+      setFormError('La fecha fin no puede ser anterior a la fecha inicio')
       return
     }
     setSubmitting(true)
@@ -76,7 +95,10 @@ export default function TareasPendientesPage() {
           nombre,
           descripcion: descripcion || undefined,
           color,
+          listaId: listaId ? Number(listaId) : undefined,
           asignadoAId: asignadoAId ? Number(asignadoAId) : null,
+          fechaInicio,
+          fechaFin,
         }
         await ctrl._update(editing.id, dto)
       } else {
@@ -84,7 +106,10 @@ export default function TareasPendientesPage() {
           nombre,
           descripcion: descripcion || undefined,
           color,
+          listaId: listaId ? Number(listaId) : undefined,
           asignadoAId: asignadoAId ? Number(asignadoAId) : null,
+          fechaInicio,
+          fechaFin,
         }
         await ctrl._create(dto)
       }
@@ -128,6 +153,8 @@ export default function TareasPendientesPage() {
               <Th>Nombre</Th>
               <Th>Descripción</Th>
               <Th>Asignado a</Th>
+              <Th>Vigencia</Th>
+              {isAdmin && <Th>Avance</Th>}
               <Th>Estado</Th>
               {isAdmin && <Th>Acciones</Th>}
             </Tr>
@@ -135,7 +162,7 @@ export default function TareasPendientesPage() {
           <TBody>
             {ctrl.pendientes.length === 0 ? (
               <Tr>
-                <Td colSpan={isAdmin ? 5 : 4} style={{ textAlign: 'center', color: 'var(--color-text-soft)' }}>
+                <Td colSpan={isAdmin ? 7 : 5} style={{ textAlign: 'center', color: 'var(--color-text-soft)' }}>
                   No hay tareas pendientes.
                 </Td>
               </Tr>
@@ -158,6 +185,41 @@ export default function TareasPendientesPage() {
                   </Td>
                   <Td style={{ color: 'var(--color-text-soft)' }}>{tp.descripcion ?? '—'}</Td>
                   <Td>{tp.asignadoANombre ?? <Badge variant='neutral'>Todos</Badge>}</Td>
+                  <Td style={{ fontSize: '0.75rem', color: 'var(--color-text-soft)' }}>
+                    {tp.fechaInicio} → {tp.fechaFin}
+                  </Td>
+                  {isAdmin && (
+                    <Td>
+                      {(() => {
+                        const real = tp.avancePct ?? 0
+                        const esperado = tp.avanceEsperadoHoy ?? 0
+                        const diff = real - esperado
+                        const isAtras = diff < -10
+                        const isAdelante = diff > 10
+                        const barColor = isAtras ? '#c0392b' : real >= 80 ? 'var(--color-success)' : 'var(--color-petroleum)'
+                        return (
+                          <>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <div style={{ flex: 1, height: '6px', borderRadius: '3px', backgroundColor: 'var(--color-border)', overflow: 'hidden', position: 'relative' }}>
+                                {/* Marker for expected progress */}
+                                <div style={{ position: 'absolute', left: `${esperado}%`, top: 0, width: '2px', height: '100%', backgroundColor: '#f39c12', zIndex: 1 }} />
+                                <div style={{ width: `${real}%`, height: '100%', borderRadius: '3px', backgroundColor: barColor }} />
+                              </div>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{real}%</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
+                              <span style={{ fontSize: '0.65rem', color: 'var(--color-text-soft)' }}>
+                                {tp.horasEjecutadas ?? 0}h / {tp.horasEsperadas ?? 0}h
+                              </span>
+                              {isAtras && <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#c0392b' }}>⚠ Atrasado ({Math.abs(diff)}%)</span>}
+                              {isAdelante && <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-success)' }}>✓ Adelantado (+{diff}%)</span>}
+                              {!isAtras && !isAdelante && <span style={{ fontSize: '0.65rem', color: 'var(--color-text-soft)' }}>Esperado: {esperado}%</span>}
+                            </div>
+                          </>
+                        )
+                      })()}
+                    </Td>
+                  )}
                   <Td>{tp.reclamada ? <Badge variant='success'>Agendada</Badge> : <Badge variant='warning'>Pendiente</Badge>}</Td>
                   {isAdmin && (
                     <Td>
@@ -198,6 +260,18 @@ export default function TareasPendientesPage() {
           {formError && <p style={{ color: '#c0392b', fontSize: '0.875rem' }}>{formError}</p>}
           <Input label='Nombre' value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder='Nombre de la tarea' />
           <Input label='Descripción' value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder='Opcional' />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <Input label='Fecha inicio' type='date' value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
+            <Input label='Fecha fin' type='date' value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
+          </div>
+          <Select label='Lista destino' value={listaId} onChange={(e) => setListaId(e.target.value)}>
+            <option value=''>Sin lista (se elige al agendar)</option>
+            {listas.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.nombre}
+              </option>
+            ))}
+          </Select>
           <Select label='Asignar a' value={asignadoAId} onChange={(e) => setAsignadoAId(e.target.value)}>
             <option value=''>Todos (pool general)</option>
             {usuarios.map((u) => (

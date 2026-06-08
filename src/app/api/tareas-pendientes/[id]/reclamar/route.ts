@@ -38,15 +38,18 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
         );
     }
 
-    const { listaId, fecha, horaInicio, horaFin } = parsed.data;
+    const { fecha, horaInicio, horaFin } = parsed.data;
 
-    // Verify lista belongs to user
-    const lista = await prisma.listaTarea.findUnique({ where: { id: listaId } });
-    if (!lista || lista.ownerId !== userId) {
-        return NextResponse.json({ error: "Lista no válida" }, { status: 400 });
+    // Use the listaId assigned by admin in the pending task
+    const listaId = pendiente.listaId;
+    if (listaId === null) {
+        return NextResponse.json(
+            { error: "La tarea pendiente no tiene una lista asignada" },
+            { status: 400 },
+        );
     }
 
-    // Create real task + mark pending as claimed in a transaction
+    // Create real task linked to pendiente + mark pending as claimed
     const [tarea] = await prisma.$transaction([
         prisma.tarea.create({
             data: {
@@ -58,6 +61,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
                 horaInicio,
                 horaFin,
                 color: pendiente.color,
+                origenPendienteId: pendiente.id,
             },
         }),
         prisma.tareaPendiente.update({

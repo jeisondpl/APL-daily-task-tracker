@@ -77,14 +77,23 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
 
   const data = parsed.data;
 
-  // Color always follows the (possibly new) list, scoped to the task's OWNER
-  // (not the requester — an admin edits a collaborator's task).
-  const effectiveListaId = data.listaId ?? tarea.listaId;
-  const lista = await prisma.listaTarea.findFirst({
-    where: { id: effectiveListaId, ownerId: tarea.ownerId },
-  });
-  if (!lista) {
-    return NextResponse.json({ error: "Lista no encontrada" }, { status: 400 });
+  // Only re-validate the list and re-derive the color when the list ACTUALLY
+  // changes. Otherwise a simple "completada"/time edit must not fail just
+  // because the task already points to a list owned by someone else
+  // (pre-existing data inconsistency).
+  let nuevoColor: string | undefined;
+  if (data.listaId !== undefined && data.listaId !== tarea.listaId) {
+    // Lists are global/shared — any existing list is usable by any task.
+    const lista = await prisma.listaTarea.findUnique({
+      where: { id: data.listaId },
+    });
+    if (!lista) {
+      return NextResponse.json(
+        { error: "Lista no encontrada" },
+        { status: 400 },
+      );
+    }
+    nuevoColor = lista.colorDefault;
   }
 
   const updated = await prisma.tarea.update({
@@ -98,7 +107,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       }),
       ...(data.horaInicio !== undefined && { horaInicio: data.horaInicio }),
       ...(data.horaFin !== undefined && { horaFin: data.horaFin }),
-      color: lista.colorDefault,
+      ...(nuevoColor !== undefined && { color: nuevoColor }),
       ...(data.completada !== undefined && { completada: data.completada }),
     },
     include: { lista: true },

@@ -40,7 +40,7 @@ function useGrupos(tareas: ITarea[], listas: IListaTarea[]): Grupo[] {
         ({
           listaId: t.listaId,
           nombre: t.listaNombre ?? lista?.nombre ?? 'Sin lista',
-          color: lista?.colorDefault ?? t.color ?? '#8661F5',
+          color: t.color ?? lista?.colorDefault ?? '#8661F5',
           count: 0,
           minutes: 0,
         } satisfies Grupo)

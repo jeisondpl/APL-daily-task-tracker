@@ -46,7 +46,8 @@ model ListaTarea {
   createdAt    DateTime @default(now()) @map("fecha_creacion")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  tareas Tarea[]
+  tareas           Tarea[]
+  tareasPendientes TareaPendiente[]
 
   @@index([ownerId])
   @@map("listas_tareas")
@@ -69,24 +70,35 @@ model Tarea {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  origenPendienteId Int?            @map("origen_pendiente_id")
+  origenPendiente   TareaPendiente? @relation("OrigenPendiente", fields: [origenPendienteId], references: [id], onDelete: SetNull)
+
   @@index([listaId])
   @@index([ownerId, fecha])
+  @@index([origenPendienteId])
   @@map("tareas")
 }
 
 model TareaPendiente {
-  id          Int      @id @default(autoincrement())
-  nombre      String   @db.VarChar(300)
-  descripcion String?  @db.Text
-  color       String   @default("#10B981") @db.VarChar(20)
-  creadoPorId Int      @map("creado_por_id")
-  creadoPor   Usuario  @relation("CreadoPor", fields: [creadoPorId], references: [id], onDelete: Cascade)
-  asignadoAId Int?     @map("asignado_a_id")
-  asignadoA   Usuario? @relation("AsignadoA", fields: [asignadoAId], references: [id], onDelete: SetNull)
-  reclamada   Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id          Int         @id @default(autoincrement())
+  nombre      String      @db.VarChar(300)
+  descripcion String?     @db.Text
+  color       String      @default("#10B981") @db.VarChar(20)
+  creadoPorId Int         @map("creado_por_id")
+  creadoPor   Usuario     @relation("CreadoPor", fields: [creadoPorId], references: [id], onDelete: Cascade)
+  asignadoAId Int?        @map("asignado_a_id")
+  asignadoA   Usuario?    @relation("AsignadoA", fields: [asignadoAId], references: [id], onDelete: SetNull)
+  listaId     Int?        @map("lista_id")
+  lista       ListaTarea? @relation(fields: [listaId], references: [id], onDelete: SetNull)
+  reclamada   Boolean     @default(false)
+  fechaInicio DateTime    @map("fecha_inicio") @db.Date
+  fechaFin    DateTime    @map("fecha_fin") @db.Date
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  tareasGeneradas Tarea[] @relation("OrigenPendiente")
 
   @@index([asignadoAId])
+  @@index([fechaInicio, fechaFin])
   @@map("tareas_pendientes")
 }

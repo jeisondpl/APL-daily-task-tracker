@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useTareasPendientesController } from '@/modules/tareas-pendientes/presentation/hooks/useTareasPendientesController'
-import type { IListaTarea } from '@/modules/listas-tareas/domain/entities/ListaTarea.entities'
 import type { IReclamarTareaPendienteDTO } from '@/modules/tareas-pendientes/domain/entities/TareaPendiente.entities'
 import { Button } from '@/shared/components/ui/Button'
 import { Modal } from '@/shared/components/ui/Modal'
@@ -16,16 +15,14 @@ for (let h = 5; h <= 23; h++) {
 }
 
 interface Props {
-  listas: IListaTarea[]
   fecha: string
   onReclamada: () => void
 }
 
-export function MisPendientes({ listas, fecha, onReclamada }: Props) {
+export function MisPendientes({ fecha, onReclamada }: Props) {
   const ctrl = useTareasPendientesController()
   const [collapsed, setCollapsed] = useState(false)
   const [reclamarId, setReclamarId] = useState<number | null>(null)
-  const [listaId, setListaId] = useState('')
   const [horaInicio, setHoraInicio] = useState('08:00')
   const [horaFin, setHoraFin] = useState('09:00')
   const [submitting, setSubmitting] = useState(false)
@@ -39,10 +36,6 @@ export function MisPendientes({ listas, fecha, onReclamada }: Props) {
   if (ctrl.pendientes.length === 0 && !ctrl.loading) return null
 
   async function handleReclamar() {
-    if (!listaId) {
-      setFormError('Elegí una lista')
-      return
-    }
     if (horaFin <= horaInicio) {
       setFormError('Hora fin debe ser mayor')
       return
@@ -51,7 +44,6 @@ export function MisPendientes({ listas, fecha, onReclamada }: Props) {
     setFormError(null)
     try {
       const dto: IReclamarTareaPendienteDTO = {
-        listaId: Number(listaId),
         fecha,
         horaInicio,
         horaFin,
@@ -128,13 +120,40 @@ export function MisPendientes({ listas, fecha, onReclamada }: Props) {
                     />
                     <span style={{ fontWeight: 500, fontSize: '0.875rem' }}>{tp.nombre}</span>
                     {tp.descripcion && <span style={{ color: 'var(--color-text-soft)', fontSize: '0.75rem' }}>— {tp.descripcion}</span>}
+                    {tp.listaNombre && (
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          backgroundColor: 'var(--color-bg-soft, #f0f0f0)',
+                          color: 'var(--color-text-soft)',
+                          border: '1px solid var(--color-border)',
+                        }}
+                      >
+                        📋 {tp.listaNombre}
+                      </span>
+                    )}
+                    {tp.avancePct !== undefined && (
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          backgroundColor: (tp.avancePct ?? 0) < (tp.avanceEsperadoHoy ?? 0) - 10 ? '#fdecea' : '#e8f5e9',
+                          color: (tp.avancePct ?? 0) < (tp.avanceEsperadoHoy ?? 0) - 10 ? '#c0392b' : '#27ae60',
+                        }}
+                      >
+                        {tp.avancePct}% avance
+                      </span>
+                    )}
                   </span>
                   <Button
                     variant='primary'
                     size='sm'
                     onClick={() => {
                       setReclamarId(tp.id)
-                      setListaId(listas[0]?.id?.toString() ?? '')
                       setHoraInicio('08:00')
                       setHoraFin('09:00')
                       setFormError(null)
@@ -168,13 +187,6 @@ export function MisPendientes({ listas, fecha, onReclamada }: Props) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {formError && <p style={{ color: '#c0392b', fontSize: '0.875rem' }}>{formError}</p>}
           <Input label='Fecha' type='date' value={fecha} disabled />
-          <Select label='Lista' value={listaId} onChange={(e) => setListaId(e.target.value)}>
-            {listas.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.nombre}
-              </option>
-            ))}
-          </Select>
           <Select label='Hora inicio' value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)}>
             {SLOTS.map((s) => (
               <option key={s} value={s}>

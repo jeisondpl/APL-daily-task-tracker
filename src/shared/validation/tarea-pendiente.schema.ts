@@ -1,17 +1,24 @@
 import { z } from "zod";
 
-export const createTareaPendienteSchema = z.object({
+const baseTareaPendienteSchema = z.object({
     nombre: z.string().min(1, "requerido").max(300),
     descripcion: z.string().max(2000).optional(),
     color: z.string().max(20).optional(),
     asignadoAId: z.coerce.number().int().positive().optional().nullable(),
+    listaId: z.coerce.number().int().positive().optional(),
+    fechaInicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "fecha inicio requerida"),
+    fechaFin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "fecha fin requerida"),
 });
 
-export const updateTareaPendienteSchema = createTareaPendienteSchema.partial();
+export const createTareaPendienteSchema = baseTareaPendienteSchema.refine((d) => d.fechaFin >= d.fechaInicio, {
+    message: "La fecha fin no puede ser anterior a la fecha inicio",
+    path: ["fechaFin"],
+});
+
+export const updateTareaPendienteSchema = baseTareaPendienteSchema.partial();
 
 export const reclamarTareaPendienteSchema = z
     .object({
-        listaId: z.coerce.number().int().positive(),
         fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "fecha inválida"),
         horaInicio: z
             .string()
