@@ -11,10 +11,8 @@ import {
   ResumenDia,
   HorasPorListaBar,
 } from "@/views/Tareas/EstadisticasDia";
-import { AgregarTareaModal } from "@/views/Tareas/AgregarTareaModal";
 import { EditarTareaModal } from "@/views/Tareas/EditarTareaModal";
 import { PageHeader } from "@/shared/components/ui/PageHeader";
-import { Button } from "@/shared/components/ui/Button";
 import {
   formatFechaLarga,
   todayISO,
@@ -22,7 +20,6 @@ import {
   monthRangeISO,
 } from "@/shared/lib/utils";
 import type {
-  ICreateTareaDTO,
   ITarea,
   IUpdateTareaDTO,
 } from "@/modules/tareas/domain/entities/Tarea.entities";
@@ -54,7 +51,6 @@ export default function DashboardPage() {
   const [visibleMonth, setVisibleMonth] = useState<Date>(() =>
     parseLocalDate(todayISO()),
   );
-  const [createOpen, setCreateOpen] = useState(false);
   const [selectedTarea, setSelectedTarea] = useState<ITarea | null>(null);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -107,11 +103,6 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleAssign(dto: ICreateTareaDTO) {
-    if (!collabId) return;
-    await tareasCtrl._create({ ...dto, ownerId: collabId });
-    reloadMonth();
-  }
   async function handleSave(id: number, dto: IUpdateTareaDTO) {
     await tareasCtrl._update(id, dto);
     reloadMonth();
@@ -141,7 +132,7 @@ export default function DashboardPage() {
     <div>
       <PageHeader
         title="Panel de administración"
-        subtitle="Elegí un colaborador para ver y planificar sus tareas"
+        subtitle="Seguí el avance y la agenda de tus colaboradores"
       />
 
       {/* KPI strip */}
@@ -253,7 +244,7 @@ export default function DashboardPage() {
             borderRadius: "12px",
           }}
         >
-          Seleccioná un colaborador arriba para ver su agenda y asignarle tareas.
+          Seleccioná un colaborador arriba para ver su agenda y su avance.
         </div>
       ) : (
         <div
@@ -305,22 +296,7 @@ export default function DashboardPage() {
               >
                 {collab.nombre} — {formatFechaLarga(selectedDate)}
               </h2>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => setCreateOpen(true)}
-                disabled={listasCtrl.listas.length === 0}
-              >
-                + Asignar tarea
-              </Button>
             </div>
-
-            {listasCtrl.listas.length === 0 && (
-              <p style={{ color: "#C0392B", fontSize: "0.85rem", marginBottom: "8px" }}>
-                Este colaborador no tiene listas todavía, así que no se le pueden
-                asignar tareas aún.
-              </p>
-            )}
 
             {tareasCtrl.loading ? (
               <p style={{ color: "var(--color-text-soft)" }}>Cargando…</p>
@@ -340,14 +316,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
-      <AgregarTareaModal
-        open={createOpen}
-        listas={listasCtrl.listas}
-        fecha={selectedDate}
-        onClose={() => setCreateOpen(false)}
-        onCreate={handleAssign}
-      />
 
       <EditarTareaModal
         tarea={selectedTarea}
