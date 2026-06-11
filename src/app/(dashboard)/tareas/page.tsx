@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { useTareasController } from '@/modules/tareas/presentation/hooks/useTareasController'
 import { useListasController } from '@/modules/listas-tareas/presentation/hooks/useListasController'
 import { MesCalendario } from '@/views/Tareas/MesCalendario'
@@ -21,6 +22,13 @@ function shiftDay(iso: string, delta: number): string {
 }
 
 export default function TareasPage() {
+  const { data: session } = useSession()
+  const rol = session?.user?.rol
+  // Workers (Empleado/Semillero) can't open past days: registration is locked
+  // to today onward so penalties can't be dodged by backfilling.
+  const isAdmin = rol === 'Administrador' || rol === 'ADMIN'
+  const blockPastDays = !isAdmin
+
   const tareasCtrl = useTareasController()
   const listasCtrl = useListasController()
 
@@ -56,8 +64,10 @@ export default function TareasPage() {
     tareasCtrl._list(monthRangeISO(visibleMonth))
   }
 
-  // Select a day; keep the calendar on that day's month.
+  // Select a day; keep the calendar on that day's month. Workers can't
+  // navigate into locked (past) days — also covers the ‹ › nav buttons.
   function selectDate(iso: string) {
+    if (blockPastDays && iso < todayISO()) return
     setSelectedDate(iso)
     const d = parseLocalDate(iso)
     if (d.getMonth() !== visibleMonth.getMonth() || d.getFullYear() !== visibleMonth.getFullYear()) {
@@ -111,7 +121,7 @@ export default function TareasPage() {
             gap: '16px',
           }}
         >
-          <MesCalendario selectedDate={selectedDate} visibleMonth={visibleMonth} countsByDay={countsByDay} onSelectDate={selectDate} onMonthChange={setVisibleMonth} />
+          <MesCalendario selectedDate={selectedDate} visibleMonth={visibleMonth} countsByDay={countsByDay} blockPastDays={blockPastDays} onSelectDate={selectDate} onMonthChange={setVisibleMonth} />
           <ResumenDia tareas={dayTareas} listas={listasCtrl.listas} />
         </div>
 
@@ -129,7 +139,14 @@ export default function TareasPage() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button type='button' aria-label='Día anterior' onClick={() => selectDate(shiftDay(selectedDate, -1))} className='dtt-cal-today-btn' style={dayNavBtn}>
+              <button
+                type='button'
+                aria-label='Día anterior'
+                onClick={() => selectDate(shiftDay(selectedDate, -1))}
+                disabled={blockPastDays && shiftDay(selectedDate, -1) < todayISO()}
+                className='dtt-cal-today-btn'
+                style={{ ...dayNavBtn, ...(blockPastDays && shiftDay(selectedDate, -1) < todayISO() ? { opacity: 0.4, cursor: 'not-allowed' } : {}) }}
+              >
                 ‹
               </button>
               <h2

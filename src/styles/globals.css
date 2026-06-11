@@ -167,6 +167,20 @@ body {
 .dtt-calendar .rdp-selected .dtt-cal-count {
   background-color: var(--color-accent-orange);
 }
+.dtt-calendar .rdp-disabled .rdp-day_button {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.dtt-cal-penalty {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #c0392b;
+  box-shadow: 0 0 0 1px var(--color-surface);
+}
 .dtt-cal-today-btn:hover {
   background-color: var(--color-bg) !important;
 }

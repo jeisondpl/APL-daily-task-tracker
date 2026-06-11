@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/shared/lib/prisma";
+import {
+    fechaBloqueadaParaRegistro,
+    ERROR_DIA_BLOQUEADO,
+} from "@/shared/lib/registro-guards";
 import { reclamarTareaPendienteSchema } from "@/shared/validation/tarea-pendiente.schema";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -39,6 +43,10 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     }
 
     const { fecha, horaInicio, horaFin } = parsed.data;
+
+    if (fechaBloqueadaParaRegistro(fecha, session.user?.rol)) {
+        return NextResponse.json({ error: ERROR_DIA_BLOQUEADO }, { status: 403 });
+    }
 
     // Use the listaId assigned by admin in the pending task
     const listaId = pendiente.listaId;

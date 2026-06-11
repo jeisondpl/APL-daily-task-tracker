@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { esAdmin } from "@/shared/lib/auth-guards";
+import {
+  fechaBloqueadaParaRegistro,
+  ERROR_DIA_BLOQUEADO,
+} from "@/shared/lib/registro-guards";
 import { prisma } from "@/shared/lib/prisma";
 import { createTareaSchema } from "@/shared/validation/tarea.schema";
 import type { ITarea } from "@/modules/tareas/domain/entities/Tarea.entities";
@@ -91,6 +95,10 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
+
+  if (fechaBloqueadaParaRegistro(data.fecha, session.user?.rol)) {
+    return NextResponse.json({ error: ERROR_DIA_BLOQUEADO }, { status: 403 });
+  }
 
   // Admins may assign the task to a collaborator (data.ownerId); employees
   // always create for themselves.

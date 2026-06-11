@@ -13,6 +13,8 @@ interface Props {
   selectedDate: string; // YYYY-MM-DD
   visibleMonth: Date;
   countsByDay: Map<string, number>;
+  penalizedDays?: Set<string>; // YYYY-MM-DD days with a score penalty
+  blockPastDays?: boolean; // workers: past days are locked for registration
   onSelectDate: (iso: string) => void;
   onMonthChange: (month: Date) => void;
 }
@@ -21,21 +23,29 @@ export function MesCalendario({
   selectedDate,
   visibleMonth,
   countsByDay,
+  penalizedDays,
+  blockPastDays = false,
   onSelectDate,
   onMonthChange,
 }: Props) {
   const defaults = getDefaultClassNames();
 
-  // Custom day cell: day number + a small badge with the task count.
+  // Custom day cell: day number + a small badge with the task count, plus a
+  // red dot when the day carries a penalty (no tasks registered).
   function DayButton(props: DayButtonProps) {
     const { day, modifiers, children, ...rest } = props;
     void modifiers;
     void children;
-    const count = countsByDay.get(toISODateLocal(day.date)) ?? 0;
+    const iso = toISODateLocal(day.date);
+    const count = countsByDay.get(iso) ?? 0;
+    const penalized = penalizedDays?.has(iso) ?? false;
     return (
       <button {...rest}>
         <span>{day.date.getDate()}</span>
         {count > 0 && <span className="dtt-cal-count">{count}</span>}
+        {penalized && (
+          <span className="dtt-cal-penalty" aria-label="Día penalizado" />
+        )}
       </button>
     );
   }
@@ -99,6 +109,9 @@ export function MesCalendario({
         onSelect={(d) => {
           if (d) onSelectDate(toISODateLocal(d));
         }}
+        disabled={
+          blockPastDays ? { before: parseLocalDate(todayISO()) } : undefined
+        }
         showOutsideDays
         classNames={defaults}
         components={{ DayButton }}

@@ -5,7 +5,9 @@ import { useSession } from "next-auth/react";
 import { useUsuariosController } from "@/modules/usuarios/presentation/hooks/useUsuariosController";
 import { useTareasController } from "@/modules/tareas/presentation/hooks/useTareasController";
 import { useListasController } from "@/modules/listas-tareas/presentation/hooks/useListasController";
+import { usePuntuacionController } from "@/modules/puntuacion/presentation/hooks/usePuntuacionController";
 import { MesCalendario } from "@/views/Tareas/MesCalendario";
+import { PuntuacionMes } from "@/views/Puntuacion/PuntuacionMes";
 import { TareasGantt } from "@/views/Tareas/TareasGantt";
 import {
   ResumenDia,
@@ -45,6 +47,7 @@ export default function DashboardPage() {
   const usuariosCtrl = useUsuariosController();
   const tareasCtrl = useTareasController();
   const listasCtrl = useListasController();
+  const puntuacionCtrl = usePuntuacionController();
 
   const [collabId, setCollabId] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(todayISO());
@@ -66,11 +69,16 @@ export default function DashboardPage() {
   );
   const collab = collaborators.find((c) => c.id === collabId) ?? null;
 
-  // Load the selected collaborator's month (tasks) + lists.
+  // Load the selected collaborator's month (tasks + score) + lists.
   useEffect(() => {
     if (collabId) {
       tareasCtrl._list({ owner: collabId, ...monthRangeISO(visibleMonth) });
       listasCtrl._list(collabId);
+      puntuacionCtrl._load({
+        usuarioId: collabId,
+        mes: visibleMonth.getMonth() + 1,
+        anio: visibleMonth.getFullYear(),
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collabId, visibleMonth]);
@@ -87,9 +95,23 @@ export default function DashboardPage() {
     return map;
   }, [tareasCtrl.tareas]);
 
+  const penalizedDays = useMemo(
+    () =>
+      new Set(
+        (puntuacionCtrl.resumen?.penalizaciones ?? []).map((p) => p.fecha),
+      ),
+    [puntuacionCtrl.resumen],
+  );
+
   function reloadMonth() {
-    if (collabId)
+    if (collabId) {
       tareasCtrl._list({ owner: collabId, ...monthRangeISO(visibleMonth) });
+      puntuacionCtrl._load({
+        usuarioId: collabId,
+        mes: visibleMonth.getMonth() + 1,
+        anio: visibleMonth.getFullYear(),
+      });
+    }
   }
 
   function selectDate(iso: string) {
@@ -152,6 +174,14 @@ export default function DashboardPage() {
         <Kpi
           label="Completadas"
           value={collab ? `${completadas}/${dayTareas.length}` : "—"}
+        />
+        <Kpi
+          label={collab ? `Puntos del mes · ${collab.nombre}` : "Puntos del mes"}
+          value={
+            collab && puntuacionCtrl.resumen
+              ? String(puntuacionCtrl.resumen.totalPuntos)
+              : "—"
+          }
         />
       </div>
 
@@ -268,8 +298,14 @@ export default function DashboardPage() {
               selectedDate={selectedDate}
               visibleMonth={visibleMonth}
               countsByDay={countsByDay}
+              penalizedDays={penalizedDays}
               onSelectDate={selectDate}
               onMonthChange={setVisibleMonth}
+            />
+            <PuntuacionMes
+              resumen={puntuacionCtrl.resumen}
+              loading={puntuacionCtrl.loading}
+              error={puntuacionCtrl.error}
             />
             <ResumenDia tareas={dayTareas} listas={listasCtrl.listas} />
           </div>

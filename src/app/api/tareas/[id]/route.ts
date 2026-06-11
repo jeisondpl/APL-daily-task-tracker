@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { esAdmin } from "@/shared/lib/auth-guards";
+import {
+  fechaBloqueadaParaRegistro,
+  ERROR_DIA_BLOQUEADO,
+} from "@/shared/lib/registro-guards";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTareaSchema } from "@/shared/validation/tarea.schema";
 import type { ITarea } from "@/modules/tareas/domain/entities/Tarea.entities";
@@ -77,6 +81,16 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
 
   const data = parsed.data;
 
+  // Workers can't touch tasks on locked (past) days, nor move a task into one.
+  const fechaActual = tarea.fecha.toISOString().slice(0, 10);
+  if (
+    fechaBloqueadaParaRegistro(fechaActual, session.user?.rol) ||
+    (data.fecha !== undefined &&
+      fechaBloqueadaParaRegistro(data.fecha, session.user?.rol))
+  ) {
+    return NextResponse.json({ error: ERROR_DIA_BLOQUEADO }, { status: 403 });
+  }
+
   // Only re-validate the list and re-derive the color when the list ACTUALLY
   // changes. Otherwise a simple "completada"/time edit must not fail just
   // because the task already points to a list owned by someone else
@@ -127,6 +141,11 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
   const tarea = await prisma.tarea.findUnique({ where: { id: Number(id) } });
   if (!tarea || !canAccess(tarea.ownerId, sessionUserId, session.user?.rol)) {
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  }
+
+  const fechaTarea = tarea.fecha.toISOString().slice(0, 10);
+  if (fechaBloqueadaParaRegistro(fechaTarea, session.user?.rol)) {
+    return NextResponse.json({ error: ERROR_DIA_BLOQUEADO }, { status: 403 });
   }
 
   await prisma.tarea.delete({ where: { id: Number(id) } });
