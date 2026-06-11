@@ -1,4 +1,5 @@
 import { PENALTY_POINTS, SCORING_TIMEZONE } from "./puntuacion.constants";
+import { festivosEnRango } from "./festivosColombia";
 import type { IPenalizacionDia } from "./entities/Puntuacion.entities";
 
 // All dates in this module are plain "YYYY-MM-DD" strings, so comparisons
@@ -49,6 +50,7 @@ export function minISO(...dates: string[]): string {
 
 /**
  * Pure penalty calculation over an inclusive [desde, hasta] window.
+ * Weekends and Colombian public holidays are never penalized.
  * The caller is responsible for clamping the window (scoring start date,
  * user creation date, yesterday) and for role/active exclusions.
  */
@@ -61,11 +63,12 @@ export function calcularPenalizaciones(params: {
   const penalizaciones: IPenalizacionDia[] = [];
   if (desde > hasta) return penalizaciones;
 
+  const festivos = festivosEnRango(desde, hasta);
   const cursor = toUTCDate(desde);
   const fin = toUTCDate(hasta);
   while (cursor <= fin) {
     const iso = toISO(cursor);
-    if (esDiaHabil(iso) && !fechasConTarea.has(iso)) {
+    if (esDiaHabil(iso) && !festivos.has(iso) && !fechasConTarea.has(iso)) {
       penalizaciones.push({
         fecha: iso,
         puntos: PENALTY_POINTS,
