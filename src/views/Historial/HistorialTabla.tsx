@@ -80,7 +80,7 @@ export function HistorialTabla({ grupos }: Props) {
         <Tr className="border-0">
           <Th style={{ width: 32 }} />
           <Th>Fecha</Th>
-          <Th style={{ textAlign: "center", width: 80 }}>Tareas</Th>
+          <Th style={{ width: 180 }}>Lista</Th>
           <Th style={{ textAlign: "center", width: 90 }}>Horas</Th>
           <Th style={{ textAlign: "center", width: 110 }}>Completadas</Th>
         </Tr>
@@ -120,11 +120,24 @@ export function HistorialTabla({ grupos }: Props) {
                     textTransform: "capitalize",
                   }}
                 >
-                  {formatFechaLarga(fecha)}
+                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {formatFechaLarga(fecha)}
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        color: "var(--color-text-soft)",
+                        backgroundColor: "var(--color-bg)",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: "999px",
+                        padding: "1px 8px",
+                      }}
+                    >
+                      {tareas.length} tarea{tareas.length !== 1 ? "s" : ""}
+                    </span>
+                  </span>
                 </Td>
-                <Td style={{ textAlign: "center", color: "var(--color-text)" }}>
-                  {tareas.length}
-                </Td>
+                <Td />
                 <Td
                   style={{
                     textAlign: "center",

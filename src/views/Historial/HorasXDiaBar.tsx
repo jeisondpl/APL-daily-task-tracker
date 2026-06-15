@@ -35,19 +35,20 @@ interface Props {
 }
 
 export function HorasXDiaBar({ grupos }: Props) {
-  // Aggregate all tasks in the range by nombre, summing minutes across days.
+  // Aggregate all tasks in the range by listaNombre, summing minutes across days.
   const data = useMemo(() => {
     const map = new Map<string, { nombre: string; color: string; minutes: number; count: number }>();
     for (const { tareas } of grupos) {
       for (const t of tareas) {
+        const key = t.listaNombre ?? "Sin lista";
         const dur = Math.max(0, toMin(t.horaFin) - toMin(t.horaInicio));
-        const existing = map.get(t.nombre);
+        const existing = map.get(key);
         if (existing) {
           existing.minutes += dur;
           existing.count += 1;
         } else {
-          map.set(t.nombre, {
-            nombre: t.nombre,
+          map.set(key, {
+            nombre: key,
             color: t.color ?? "var(--color-petroleum)",
             minutes: dur,
             count: 1,
@@ -81,7 +82,7 @@ export function HorasXDiaBar({ grupos }: Props) {
           margin: "0 0 12px",
         }}
       >
-        Horas por tarea en el período
+        Horas por lista en el período
       </h3>
       <ResponsiveContainer width="100%" height={Math.max(200, data.length * 46)}>
         <BarChart
