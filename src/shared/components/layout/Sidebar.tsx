@@ -14,6 +14,7 @@ const ADMIN_ITEMS = [
 
 const EMPLOYEE_ITEMS = [
   { href: '/tareas', label: 'Tareas' },
+  { href: '/historial', label: 'Historial' },
   { href: '/tareas-pendientes', label: 'Pendientes' },
 ]
 
